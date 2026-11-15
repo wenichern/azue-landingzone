@@ -1,0 +1,5 @@
+// Top denied flows through the hub firewall (lesson 4 / 7)
+AZFWNetworkRule
+| where TimeGenerated > ago(1h) and Action == "Deny"
+| summarize Hits = count() by SourceIp, DestinationIp, DestinationPort, Protocol
+| top 20 by Hits desc

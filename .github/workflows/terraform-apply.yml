@@ -1,0 +1,53 @@
+name: terraform-apply
+
+on:
+  push:
+    branches: [main]
+    paths: ["envs/**", "modules/**"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: terraform-lab     # never run two applies against the same state
+  cancel-in-progress: false
+
+env:
+  ARM_USE_OIDC: "true"
+  ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_subscription_id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_alert_email: ${{ vars.ALERT_EMAIL }}
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: production     # configure required reviewers in repo Settings > Environments
+    defaults:
+      run:
+        working-directory: envs/lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.9"
+
+      - name: Init
+        run: |
+          terraform init \
+            -backend-config="resource_group_name=${{ vars.TFSTATE_RG }}" \
+            -backend-config="storage_account_name=${{ vars.TFSTATE_SA }}" \
+            -backend-config="container_name=tfstate" \
+            -backend-config="key=lab.tfstate" \
+            -backend-config="use_azuread_auth=true" \
+            -backend-config="use_oidc=true"
+
+      - name: Plan
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Apply
+        run: terraform apply -input=false -auto-approve tfplan

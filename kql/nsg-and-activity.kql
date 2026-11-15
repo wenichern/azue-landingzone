@@ -1,0 +1,11 @@
+// Who changed RBAC in the last 7 days? (lesson 5 / 7)
+AzureActivity
+| where TimeGenerated > ago(7d)
+| where OperationNameValue =~ "MICROSOFT.AUTHORIZATION/ROLEASSIGNMENTS/WRITE"
+| project TimeGenerated, Caller, ResourceGroup, ActivityStatusValue, Properties
+
+// Policy denials (lesson 6)
+AzureActivity
+| where TimeGenerated > ago(24h)
+| where CategoryValue == "Policy" and ActivityStatusValue == "Failure"
+| project TimeGenerated, Caller, OperationNameValue, ResourceGroup

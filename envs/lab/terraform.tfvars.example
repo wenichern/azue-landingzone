@@ -1,0 +1,10 @@
+subscription_id = "00000000-0000-0000-0000-000000000000"
+alert_email     = "you@example.com"
+prefix          = "lz"       # must be unique in your tenant (it's a management group ID)
+
+# Flip these as you progress through the lessons
+deploy_firewall           = false
+enforce_policy            = false   # start in audit mode, then set true
+enable_conditional_access = false
+enable_pim                = false
+enable_entra_logs         = false
